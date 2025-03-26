@@ -22,6 +22,14 @@ export default function Login() {
         <button type="submit">Login</button>
       </form>
       <a href="/register">Don't have an account? Register</a>
+      <p className="mt-4 text-center">
+  <a 
+    href="/forgot-password" 
+    className="text-blue-500 hover:underline"
+  >
+    Forgot password?
+  </a>
+</p>
     </div>
   );
 }
