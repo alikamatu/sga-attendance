@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { useRouter } from "next/navigation"; // Updated import for Next.js 15
 import { AuthContextType, User } from "../type/auth";
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined); // Changed null to undefined
+const AuthContext = createContext<AuthContextType | undefined>(undefined); 
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -99,9 +99,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     router.push("/login");
   };
+  
+  // Inside your AuthProvider component
+  const requestPasswordReset = async (email: string) => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/request-password-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+  
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to request password reset");
+      }
+  
+      return await res.json();
+    } catch (err) {
+      console.error("Password reset request failed:", err);
+      throw err;
+    }
+  };
+  
+  const resetPassword = async (token: string, newPassword: string) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/auth/reset-password/${token}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword }),
+      });
+  
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to reset password");
+      }
+  
+      return await res.json();
+    } catch (err) {
+      console.error("Password reset failed:", err);
+      throw err;
+    }
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout, requestPasswordReset, resetPassword, loading }}>
       {children}
     </AuthContext.Provider>
   );
