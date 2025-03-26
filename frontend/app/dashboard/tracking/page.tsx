@@ -14,7 +14,7 @@ export default function AttendancePage() {
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
-        const response = await fetch("/api/attendance", {
+        const response = await fetch("http://localhost:5000/api/attendance", {
           headers: {
             Authorization: `Bearer ${user?.token}`,
           },
@@ -41,7 +41,7 @@ export default function AttendancePage() {
 
   const handleClockInOut = async () => {
     try {
-      const response = await fetch("/api/attendance", {
+      const response = await fetch("http://localhost:5000/api/attendance", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

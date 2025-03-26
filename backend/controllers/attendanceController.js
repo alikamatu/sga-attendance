@@ -5,15 +5,53 @@ const  sendPasswordResetEmail = require("../nodemailer.js");
 
 
 exports.addAttendance = async (req, res) => {
-  const { student_id, name, status } = req.body;
+  const { action } = req.body;
+  
   try {
-    const result = await pool.query(
-      "INSERT INTO attendance (student_id, name, status) VALUES ($1, $2, $3) RETURNING *",
-      [student_id, name, status]
-    );
-    res.status(201).json(result.rows[0]);
+    if (action === 'clockIn') {
+      const existing = await pool.query(
+        `SELECT id FROM attendance 
+         WHERE user_id = $1 AND date = CURRENT_DATE AND clock_out IS NULL`,
+        [req.user.id]
+      );
+      
+      if (existing.rows.length > 0) {
+        return res.status(400).json({ error: 'You must clock out first' });
+      }
+      
+      const { rows } = await pool.query(
+        `INSERT INTO attendance (user_id, clock_in) 
+         VALUES ($1, NOW()) 
+         RETURNING id, date, clock_in, clock_out, status`,
+        [req.user.id]
+      );
+      res.json(rows[0]);
+      
+    } else if (action === 'clockOut') {
+      const { rows } = await pool.query(
+        `UPDATE attendance 
+         SET clock_out = NOW() 
+         WHERE id = (
+           SELECT id FROM attendance 
+           WHERE user_id = $1 AND clock_out IS NULL 
+           ORDER BY clock_in DESC 
+           LIMIT 1
+         )
+         RETURNING id, date, clock_in, clock_out, status`,
+        [req.user.id]
+      );
+      
+      if (rows.length === 0) {
+        return res.status(400).json({ error: 'No active clock-in found' });
+      }
+      
+      res.json(rows[0]);
+    } else {
+      res.status(400).json({ error: 'Invalid action' });
+    }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update attendance' });
   }
 };
 
