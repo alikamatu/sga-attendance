@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -15,9 +16,11 @@ export default function Dashboard() {
   }, [user, router]);
 
   return (
+    <ProtectedRoute>
     <div className="container">
       <h2>Welcome to Dashboard</h2>
       <button onClick={logout}>Logout</button>
     </div>
+    </ProtectedRoute>
   );
 }

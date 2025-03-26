@@ -9,36 +9,43 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined); // Ch
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
+  const [loading, setLoading] = useState(true); 
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem("token");
-      if (token) {
-        // Verify token with backend before setting user
-        verifyToken(token).then(isValid => {
+    const loadUser = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          const isValid = await verifyToken(token);
           if (isValid) {
             setUser({ token });
           } else {
             localStorage.removeItem("token");
           }
-        });
+        }
+      } catch (error) {
+        console.error("Failed to load user", error);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
+    loadUser();
   }, []);
 
   const verifyToken = async (token: string): Promise<boolean> => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/verify", {
+      const response = await fetch("http://localhost:5000/api/auth/verify", {
         headers: {
-          "Authorization": `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
-      return res.ok;
+      return response.ok;
     } catch (error) {
       return false;
     }
   };
-
+  
   const login = async (email: string, password: string) => {
     try {
       const res = await fetch("http://localhost:5000/api/auth/login", {
